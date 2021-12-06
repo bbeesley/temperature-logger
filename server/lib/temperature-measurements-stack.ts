@@ -23,7 +23,7 @@ export class TemperatureMeasurementsStack extends Stack {
       },
     });
 
-    const handler = new LambdaFunction(this, 'Receive', {
+    const measurementsHandler = new LambdaFunction(this, 'API', {
       runtime: Runtime.NODEJS_14_X,
       code: Code.fromAsset('resources'),
       handler: 'handler.main',
@@ -33,26 +33,26 @@ export class TemperatureMeasurementsStack extends Stack {
       },
     });
 
-    table.grantReadWriteData(handler);
+    table.grantReadWriteData(measurementsHandler);
 
     const api = new HttpApi(this, 'temperature-measurements', {
       apiName: 'Temperature Measurements',
       description: 'This service receives temperature measurements.',
     });
 
-    const postMeasurementsIntegration = new LambdaProxyIntegration({
-      handler,
+    const measurementsIntegration = new LambdaProxyIntegration({
+      handler: measurementsHandler,
     });
 
     const [measurementsRoute] = api.addRoutes({
       path: '/measurements',
-      methods: [HttpMethod.POST],
-      integration: postMeasurementsIntegration,
+      methods: [HttpMethod.POST, HttpMethod.GET],
+      integration: measurementsIntegration,
     });
 
-    new CfnOutput(this, 'measurements-endpoint', {
+    new CfnOutput(this, 'MeasurementsEndpoint', {
       value: `${api.defaultStage?.url}${
-        measurementsRoute.path ?? 'measurements'
+        measurementsRoute.path?.replace(/^\//, '') ?? 'measurements'
       }`,
       exportName: 'endpoint',
     });
