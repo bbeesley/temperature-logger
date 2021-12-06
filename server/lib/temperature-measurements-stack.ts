@@ -52,7 +52,7 @@ export class TemperatureMeasurementsStack extends Stack {
 
     new CfnOutput(this, 'measurements-endpoint', {
       value: `${api.defaultStage?.url}${
-        measurementsRoute.path ?? '/measurements'
+        measurementsRoute.path ?? 'measurements'
       }`,
       exportName: 'endpoint',
     });

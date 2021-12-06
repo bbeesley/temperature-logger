@@ -2,7 +2,7 @@ import adafruit_requests
 import board
 import json
 import socketpool
-import socketpool
+import secrets
 import ssl
 import time
 import wifi
@@ -35,11 +35,8 @@ requests = adafruit_requests.Session(pool, ssl.create_default_context())
 i2c = board.I2C()
 bme280 = adafruit_bme280.Adafruit_BME280_I2C(i2c)
 
-DATA_LOGGER_ENDPOINT = (
-    "https://xxxxxxxx.execute-api.eu-west-1.amazonaws.com/measurements"
-)
 device_id = "logger01"
-headers = {"x-api-key": "###API_KEY###"}
+headers = {"x-api-key": secrets["api_key"]}
 pending_measurement = None
 
 
@@ -88,9 +85,13 @@ while True:
 
     try:
         json_data = json.dumps(pending_measurements)
-        print("POSTing data to {0}: {1}".format(DATA_LOGGER_ENDPOINT, json_data))
+        print(
+            "POSTing data to {0}: {1}".format(
+                secrets["data_logger_endpoint"], json_data
+            )
+        )
         response = requests.post(
-            DATA_LOGGER_ENDPOINT, json=pending_measurements, headers=headers
+            secrets["data_logger_endpoint"], json=pending_measurements, headers=headers
         )
         print("-" * 40)
         json_resp = response.json()
