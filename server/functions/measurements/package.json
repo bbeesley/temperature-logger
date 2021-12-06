@@ -1,0 +1,15 @@
+{
+  "name": "measurements",
+  "version": "1.0.0",
+  "description": "measurements api",
+  "main": "handler.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Bill Beesley <bill@beesley.dev>",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.44.0",
+    "@aws-sdk/lib-dynamodb": "^3.44.0"
+  }
+}

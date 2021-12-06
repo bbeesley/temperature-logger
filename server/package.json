@@ -1,0 +1,60 @@
+{
+  "name": "temperature-measurements",
+  "version": "0.1.0",
+  "bin": {
+    "temperature-measurements": "bin/temperature-measurements.js"
+  },
+  "scripts": {
+    "clean": "rm -rf resources/* || true",
+    "compile": "BABEL_ENV=production babel functions/measurements/src --out-dir resources --extensions \".ts\" --ignore \"src/test/**\" && cp -Rfv functions/measurements/node_modules resources/",
+    "dependabump": "ncu -u && rm -rf package-lock.json node_modules || true && npm i",
+    "lint": "tsc --noEmit && eslint --ext '.ts' .",
+    "pretest": "run-p clean lint",
+    "prebuild": "npm run compile",
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "jest",
+    "cdk": "cdk"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.14.5",
+    "@babel/core": "^7.14.6",
+    "@babel/preset-env": "^7.14.5",
+    "@aws-cdk/aws-apigatewayv2": "^1.134.0",
+    "@aws-cdk/aws-apigatewayv2-integrations": "^1.134.0",
+    "@aws-cdk/aws-dynamodb": "^1.134.0",
+    "@aws-cdk/aws-lambda": "^1.134.0",
+    "@aws-cdk/core": "^1.134.0",
+    "@types/aws-lambda": "^8.10.85",
+    "@types/jest": "^26.0.10",
+    "@types/node": "10.17.27",
+    "aws-cdk": "2.0.0",
+    "jest": "^26.4.2",
+    "ts-jest": "^26.2.0",
+    "ts-node": "^9.0.0",
+    "typescript": "~3.9.7",
+    "@babel/preset-typescript": "^7.14.5",
+    "@commitlint/cli": "^13.1.0",
+    "@commitlint/config-conventional": "^13.1.0",
+    "@typescript-eslint/eslint-plugin": "^4.27.0",
+    "@typescript-eslint/parser": "^4.27.0",
+    "conventional-changelog-angular": "^5.0.12",
+    "cz-conventional-changelog": "^3.3.0",
+    "eslint": "^7.28.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-import": "^2.23.4",
+    "eslint-plugin-jest": "^25.0.1",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "npm-check-updates": "^11.7.1",
+    "aws-cdk-lib": "2.0.0",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^2.3.1",
+    "constructs": "^10.0.0",
+    "source-map-support": "^0.5.16"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.44.0",
+    "@aws-sdk/lib-dynamodb": "^3.44.0"
+  }
+}

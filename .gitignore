@@ -1,0 +1,5 @@
+client/secrets.py
+node_modules
+__pycache__
+server/resources
+client/lib
