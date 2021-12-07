@@ -1,6 +1,10 @@
-import { HttpMethod } from '@aws-cdk/aws-apigatewayv2';
+import { HttpMethod } from './@types';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
+import {
+  DynamoDBDocumentClient,
+  PutCommand,
+  ScanCommand,
+} from '@aws-sdk/lib-dynamodb';
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 
 const client = new DynamoDBClient({});
@@ -10,32 +14,41 @@ async function post(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResultV2> {
   const measurement = JSON.parse(event.body ?? '{}');
-  const { temperature, humidity, pressure } = measurement;
+  const { temperature, humidity, pressure, logger } = measurement;
   await dynamo.send(
     new PutCommand({
       TableName: process.env.TABLE_NAME,
-      Item: { timestamp: Date.now(), temperature, humidity, pressure },
+      Item: { timestamp: Date.now(), temperature, humidity, pressure, logger },
     })
   );
   return {
-    statusCode: 200,
+    statusCode: 201,
     body: JSON.stringify({ status: 'ok' }, null, 2),
   };
 }
+
 async function get(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResultV2> {
-  const measurement = JSON.parse(event.body ?? '{}');
-  const { temperature, humidity, pressure } = measurement;
-  await dynamo.send(
-    new PutCommand({
+  const res = await dynamo.send(
+    new ScanCommand({
       TableName: process.env.TABLE_NAME,
-      Item: { timestamp: Date.now(), temperature, humidity, pressure },
     })
   );
   return {
     statusCode: 200,
-    body: JSON.stringify({ status: 'ok' }, null, 2),
+    body: JSON.stringify(
+      {
+        items: res.Items?.map((i) => ({
+          ...i,
+          dateTime: new Date(i.timestamp).toISOString(),
+        })),
+        endAt: res.LastEvaluatedKey,
+      },
+      null,
+      2
+    ),
   };
 }
 
