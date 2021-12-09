@@ -5,7 +5,7 @@ import {
   RemovalPolicy,
   CfnOutput,
 } from '@aws-cdk/core';
-import { AttributeType, Table } from '@aws-cdk/aws-dynamodb';
+import { AttributeType, BillingMode, Table } from '@aws-cdk/aws-dynamodb';
 import { HttpApi, HttpMethod } from '@aws-cdk/aws-apigatewayv2';
 import { Function as LambdaFunction, Runtime, Code } from '@aws-cdk/aws-lambda';
 import { LambdaProxyIntegration } from '@aws-cdk/aws-apigatewayv2-integrations';
@@ -15,9 +15,14 @@ export class TemperatureMeasurementsStack extends Stack {
     super(scope, id, props);
 
     const table = new Table(this, 'Table', {
-      tableName: 'temperature-measurements',
+      tableName: 'temp-measurements',
       removalPolicy: RemovalPolicy.DESTROY,
+      billingMode: BillingMode.PAY_PER_REQUEST,
       partitionKey: {
+        name: 'logger',
+        type: AttributeType.STRING,
+      },
+      sortKey: {
         name: 'timestamp',
         type: AttributeType.NUMBER,
       },
@@ -47,6 +52,12 @@ export class TemperatureMeasurementsStack extends Stack {
     const [measurementsRoute] = api.addRoutes({
       path: '/measurements',
       methods: [HttpMethod.POST, HttpMethod.GET],
+      integration: measurementsIntegration,
+    });
+
+    api.addRoutes({
+      path: '/measurements/{loggerId}',
+      methods: [HttpMethod.GET],
       integration: measurementsIntegration,
     });
 

@@ -45,7 +45,6 @@ def check_charge_status():
     print("battery voltage: ", voltage)
     if voltage > 0:
         level = 0
-        voltage = feathers2neo.get_battery_voltage()
         if voltage > 3.71:
             level = int(2.5 * 1.5)
         if voltage > 3.75:

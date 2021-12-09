@@ -3,7 +3,9 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import {
   DynamoDBDocumentClient,
   PutCommand,
+  QueryCommand,
   ScanCommand,
+  ScanCommandOutput,
 } from '@aws-sdk/lib-dynamodb';
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 
@@ -31,11 +33,28 @@ async function get(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResultV2> {
-  const res = await dynamo.send(
-    new ScanCommand({
-      TableName: process.env.TABLE_NAME,
-    })
-  );
+  let res: ScanCommandOutput;
+  if (event.pathParameters?.loggerId) {
+    const { loggerId } = event.pathParameters;
+    res = await dynamo.send(
+      new QueryCommand({
+        TableName: process.env.TABLE_NAME,
+        KeyConditionExpression: '#logger = :loggerId',
+        ExpressionAttributeNames: {
+          '#logger': 'logger',
+        },
+        ExpressionAttributeValues: {
+          ':loggerId': loggerId,
+        },
+      })
+    );
+  } else {
+    res = await dynamo.send(
+      new ScanCommand({
+        TableName: process.env.TABLE_NAME,
+      })
+    );
+  }
   return {
     statusCode: 200,
     body: JSON.stringify(
