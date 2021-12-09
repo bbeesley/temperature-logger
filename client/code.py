@@ -6,8 +6,8 @@ import secrets
 import ssl
 import time
 import wifi
-import feathers2neo
 from adafruit_bme280 import basic as adafruit_bme280
+from adafruit_lc709203f import LC709203F, PackSize
 
 # setup wifi
 requests = None
@@ -35,35 +35,15 @@ requests = adafruit_requests.Session(pool, ssl.create_default_context())
 i2c = board.I2C()
 bme280 = adafruit_bme280.Adafruit_BME280_I2C(i2c)
 
-device_id = "logger01"
+device_id = "compact-logger-01"
 headers = {"x-api-key": secrets["api_key"]}
 pending_measurement = None
 
+battery_sensor = LC709203F(board.I2C())
+battery_sensor.pack_size = PackSize.MAH3000
 
 def check_charge_status():
-    voltage = feathers2neo.get_battery_voltage()
-    print("battery voltage: ", voltage)
-    if voltage > 0:
-        level = 0
-        if voltage > 3.71:
-            level = int(2.5 * 1.5)
-        if voltage > 3.75:
-            level = int(2.5 * 2.5)
-        if voltage > 3.79:
-            level = int(2.5 * 3.5)
-        if voltage > 3.82:
-            level = int(2.5 * 4.5)
-        if voltage > 3.85:
-            level = int(2.5 * 5.5)
-        if voltage > 3.91:
-            level = int(2.5 * 6.5)
-        if voltage > 3.98:
-            level = int(2.5 * 7.5)
-        if voltage > 4.08:
-            level = int(2.5 * 8.5)
-        if voltage > 4.15:
-            level = 25
-        print("battery level: ", level)
+    print("Battery percentage: %0.1f %%" % (battery_sensor.cell_percent))
 
 
 while True:
