@@ -28,7 +28,7 @@ export class TemperatureMeasurementsStack extends Stack {
       },
     });
 
-    const measurementsHandler = new LambdaFunction(this, 'API', {
+    const measurementsHandler = new LambdaFunction(this, 'measurements', {
       runtime: Runtime.NODEJS_14_X,
       code: Code.fromAsset('resources'),
       handler: 'handler.main',
@@ -57,6 +57,18 @@ export class TemperatureMeasurementsStack extends Stack {
 
     api.addRoutes({
       path: '/measurements/{loggerId}',
+      methods: [HttpMethod.GET],
+      integration: measurementsIntegration,
+    });
+
+    api.addRoutes({
+      path: '/battery/{loggerId}',
+      methods: [HttpMethod.GET],
+      integration: measurementsIntegration,
+    });
+
+    api.addRoutes({
+      path: '/temperature/{loggerId}',
       methods: [HttpMethod.GET],
       integration: measurementsIntegration,
     });

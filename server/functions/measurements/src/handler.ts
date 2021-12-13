@@ -12,15 +12,14 @@ import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 const client = new DynamoDBClient({});
 const dynamo = DynamoDBDocumentClient.from(client);
 
-async function post(
+async function postMeasurements(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResultV2> {
   const measurement = JSON.parse(event.body ?? '{}');
-  const { temperature, humidity, pressure, logger } = measurement;
   await dynamo.send(
     new PutCommand({
       TableName: process.env.TABLE_NAME,
-      Item: { timestamp: Date.now(), temperature, humidity, pressure, logger },
+      Item: { ...measurement, timestamp: Date.now() },
     })
   );
   return {
@@ -29,7 +28,7 @@ async function post(
   };
 }
 
-async function get(
+async function getMeasurements(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResultV2> {
@@ -46,6 +45,7 @@ async function get(
         ExpressionAttributeValues: {
           ':loggerId': loggerId,
         },
+        ScanIndexForward: false,
       })
     );
   } else {
@@ -58,16 +58,95 @@ async function get(
   return {
     statusCode: 200,
     body: JSON.stringify(
-      {
-        items: res.Items?.map((i) => ({
-          ...i,
-          dateTime: new Date(i.timestamp).toISOString(),
-        })),
-        endAt: res.LastEvaluatedKey,
-      },
+      res.Items?.map((i) => ({
+        ...i,
+        dateTime: new Date(i.timestamp).toISOString(),
+      })),
       null,
       2
     ),
+  };
+}
+
+async function getBatteryLevel(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  event: APIGatewayProxyEventV2
+): Promise<APIGatewayProxyResultV2> {
+  const { loggerId = 'logger01' } = event.pathParameters ?? {};
+  const res = await dynamo.send(
+    new QueryCommand({
+      TableName: process.env.TABLE_NAME,
+      KeyConditionExpression: '#logger = :loggerId',
+      ExpressionAttributeNames: {
+        '#logger': 'logger',
+      },
+      ExpressionAttributeValues: {
+        ':loggerId': loggerId,
+      },
+      Limit: 1,
+      ScanIndexForward: false,
+    })
+  );
+  if ((res.Items ?? []).length > 0) {
+    const latest = res.Items?.pop() ?? {};
+    return {
+      statusCode: 200,
+      body: JSON.stringify(
+        {
+          batteryLevel: latest.charge,
+          dateTime: new Date(latest.timestamp).toISOString(),
+        },
+        null,
+        2
+      ),
+    };
+  }
+  return {
+    statusCode: 404,
+    body: JSON.stringify({
+      message: 'unknown device',
+    }),
+  };
+}
+
+async function getTemperature(
+  event: APIGatewayProxyEventV2
+): Promise<APIGatewayProxyResultV2> {
+  const { loggerId = 'logger01' } = event.pathParameters ?? {};
+  const res = await dynamo.send(
+    new QueryCommand({
+      TableName: process.env.TABLE_NAME,
+      KeyConditionExpression: '#logger = :loggerId',
+      ExpressionAttributeNames: {
+        '#logger': 'logger',
+      },
+      ExpressionAttributeValues: {
+        ':loggerId': loggerId,
+      },
+      Limit: 1,
+      ScanIndexForward: false,
+    })
+  );
+  if ((res.Items ?? []).length > 0) {
+    const latest = res.Items?.pop() ?? {};
+    return {
+      statusCode: 200,
+      body: JSON.stringify(
+        {
+          temperature: latest.temperature,
+          humidity: latest.humidity,
+          dateTime: new Date(latest.timestamp).toISOString(),
+        },
+        null,
+        2
+      ),
+    };
+  }
+  return {
+    statusCode: 404,
+    body: JSON.stringify({
+      message: 'unknown device',
+    }),
   };
 }
 
@@ -82,12 +161,22 @@ export async function main(
     };
   }
   try {
-    if (event.requestContext.http.method === HttpMethod.GET) {
-      const res = await get(event);
+    if (event.rawPath.startsWith('/measurements')) {
+      if (event.requestContext.http.method === HttpMethod.GET) {
+        const res = await getMeasurements(event);
+        return res;
+      }
+      if (event.requestContext.http.method === HttpMethod.POST) {
+        const res = await postMeasurements(event);
+        return res;
+      }
+    }
+    if (event.rawPath.startsWith('/battery')) {
+      const res = await getBatteryLevel(event);
       return res;
     }
-    if (event.requestContext.http.method === HttpMethod.POST) {
-      const res = await post(event);
+    if (event.rawPath.startsWith('/temperature')) {
+      const res = await getTemperature(event);
       return res;
     }
     throw new Error(`unsupported method "${event.requestContext.http.method}"`);
