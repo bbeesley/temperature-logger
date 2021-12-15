@@ -8,6 +8,11 @@ import {
   ScanCommandOutput,
 } from '@aws-sdk/lib-dynamodb';
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
+import TelegramBot from 'node-telegram-bot-api';
+
+const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN ?? '';
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID ?? '';
+const bot = new TelegramBot(TELEGRAM_TOKEN);
 
 const client = new DynamoDBClient({});
 const dynamo = DynamoDBDocumentClient.from(client);
@@ -22,6 +27,19 @@ async function postMeasurements(
       Item: { ...measurement, timestamp: Date.now() },
     })
   );
+  if (
+    measurement.charge &&
+    [20, 15, 20].includes(Math.floor(measurement.charge))
+  ) {
+    try {
+      bot.sendMessage(
+        TELEGRAM_CHAT_ID,
+        `Warning, temperature logger "${measurement.loggerId}" is running low on battery. Battery level is now ${measurement.charge}%.`
+      );
+    } catch (err) {
+      console.error('error sending charge notification', err);
+    }
+  }
   return {
     statusCode: 201,
     body: JSON.stringify({ status: 'ok' }, null, 2),

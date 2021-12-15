@@ -6,7 +6,7 @@
   },
   "scripts": {
     "clean": "rm -rf resources/* || true",
-    "compile": "BABEL_ENV=production babel functions/measurements/src --out-dir resources --extensions \".ts\" --ignore \"src/test/**\" && cp -Rfv functions/measurements/node_modules resources/",
+    "compile": "BABEL_ENV=production babel functions/measurements/src --out-dir resources --extensions \".ts\" --ignore \"src/test/**\" && cp -fv functions/measurements/package.json resources/ && cd resources && npm i --production",
     "dependabump": "ncu -u && rm -rf package-lock.json node_modules || true && npm i",
     "lint": "tsc --noEmit && eslint --ext '.ts' .",
     "pretest": "run-p clean lint",

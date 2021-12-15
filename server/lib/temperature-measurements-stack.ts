@@ -4,6 +4,7 @@ import {
   Construct,
   RemovalPolicy,
   CfnOutput,
+  Duration,
 } from '@aws-cdk/core';
 import { AttributeType, BillingMode, Table } from '@aws-cdk/aws-dynamodb';
 import { HttpApi, HttpMethod } from '@aws-cdk/aws-apigatewayv2';
@@ -32,9 +33,12 @@ export class TemperatureMeasurementsStack extends Stack {
       runtime: Runtime.NODEJS_14_X,
       code: Code.fromAsset('resources'),
       handler: 'handler.main',
+      timeout: Duration.seconds(29),
       environment: {
         TABLE_NAME: table.tableName,
         API_KEY: process.env.API_KEY ?? '',
+        TELEGRAM_TOKEN: process.env.TELEGRAM_TOKEN ?? '',
+        TELEGRAM_CHAT_ID: process.env.TELEGRAM_CHAT_ID ?? '',
       },
     });
 
