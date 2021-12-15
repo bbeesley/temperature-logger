@@ -1,4 +1,5 @@
 client/secrets.py
+client/config.py
 node_modules
 __pycache__
 server/resources
